@@ -3,13 +3,276 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="0; url=flexible_tabelle_web.html">
-<title>Flexible Tabelle</title>
+<title>Haushaltskosten</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:#f5f5f7;
+  color:#1d1d1f;
+}
+header{
+  background:white;
+  padding:20px 16px 14px;
+  position:sticky;
+  top:0;
+  z-index:5;
+  border-bottom:1px solid #ddd;
+}
+h1{
+  margin:0 0 14px;
+  font-size:26px;
+}
+main{
+  max-width:700px;
+  margin:auto;
+  padding:16px;
+}
+.form{
+  background:white;
+  padding:16px;
+  border-radius:16px;
+  margin-bottom:16px;
+}
+label{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  margin:10px 0 5px;
+}
+input,select,button{
+  width:100%;
+  font:inherit;
+  border-radius:11px;
+  padding:12px;
+}
+input,select{
+  border:1px solid #ccc;
+  background:white;
+}
+button{
+  border:0;
+  background:#1d1d1f;
+  color:white;
+  font-weight:600;
+  margin-top:14px;
+}
+.total{
+  background:#1d1d1f;
+  color:white;
+  border-radius:16px;
+  padding:18px;
+  margin-bottom:16px;
+}
+.total span{
+  display:block;
+  font-size:13px;
+  opacity:.75;
+}
+.total strong{
+  display:block;
+  font-size:28px;
+  margin-top:4px;
+}
+.card{
+  background:white;
+  border-radius:15px;
+  padding:15px;
+  margin-bottom:10px;
+  border:1px solid #ddd;
+}
+.name{
+  font-size:17px;
+  font-weight:600;
+}
+.info{
+  color:#666;
+  font-size:14px;
+  margin-top:6px;
+}
+.amount{
+  font-size:18px;
+  font-weight:700;
+  margin-top:8px;
+}
+.delete{
+  background:white;
+  color:#c00;
+  border:1px solid #ddd;
+  margin-top:10px;
+}
+.empty{
+  text-align:center;
+  color:#777;
+  padding:30px 10px;
+}
+</style>
 </head>
+
 <body>
+
+<header>
+<h1>Haushaltskosten</h1>
+</header>
+
+<main>
+
+<div class="form">
+
+<label>Kosten / Bezeichnung</label>
+<input id="name" type="text" placeholder="z. B. Strom">
+
+<label>Betrag (€)</label>
+<input id="amount" type="number" inputmode="decimal" step="0.01" placeholder="0,00">
+
+<label>Datum</label>
+<input id="date" type="date">
+
+<label>Kategorie</label>
+<select id="category">
+<option>Wohnen</option>
+<option>Strom</option>
+<option>Wasser</option>
+<option>Heizung</option>
+<option>Lebensmittel</option>
+<option>Auto</option>
+<option>Versicherung</option>
+<option>Internet / Handy</option>
+<option>Kinder</option>
+<option>Sonstiges</option>
+</select>
+
+<button onclick="addCost()">+ Kosten hinzufügen</button>
+
+</div>
+
+<div class="total">
+<span>Gesamtsumme</span>
+<strong id="total">0,00 €</strong>
+</div>
+
+<div id="list"></div>
+
+</main>
+
 <script>
-window.location.replace('flexible_tabelle_web.html');
+
+let costs=JSON.parse(localStorage.getItem("haushaltskosten")||"[]");
+
+function save(){
+ localStorage.setItem("haushaltskosten",JSON.stringify(costs));
+}
+
+function euro(value){
+ return Number(value).toLocaleString("de-DE",{
+   minimumFractionDigits:2,
+   maximumFractionDigits:2
+ })+" €";
+}
+
+function addCost(){
+
+ const name=document.getElementById("name").value.trim();
+ const amount=parseFloat(
+   document.getElementById("amount").value.replace(",",".")
+ );
+ const date=document.getElementById("date").value;
+ const category=document.getElementById("category").value;
+
+ if(!name){
+   alert("Bitte eine Bezeichnung eingeben.");
+   return;
+ }
+
+ if(isNaN(amount)||amount<=0){
+   alert("Bitte einen gültigen Betrag eingeben.");
+   return;
+ }
+
+ costs.push({
+   id:Date.now(),
+   name:name,
+   amount:amount,
+   date:date,
+   category:category
+ });
+
+ save();
+
+ document.getElementById("name").value="";
+ document.getElementById("amount").value="";
+ document.getElementById("date").value="";
+
+ render();
+}
+
+function deleteCost(id){
+ costs=costs.filter(x=>x.id!==id);
+ save();
+ render();
+}
+
+function render(){
+
+ const list=document.getElementById("list");
+
+ const total=costs.reduce(
+   (sum,x)=>sum+Number(x.amount),0
+ );
+
+ document.getElementById("total").textContent=euro(total);
+
+ if(costs.length===0){
+   list.innerHTML='<div class="card empty">Noch keine Kosten eingetragen.</div>';
+   return;
+ }
+
+ const sorted=[...costs].reverse();
+
+ list.innerHTML=sorted.map(x=>`
+
+ <div class="card">
+
+   <div class="name">${escapeHtml(x.name)}</div>
+
+   <div class="info">
+     ${escapeHtml(x.category)}
+     ${x.date ? " · "+formatDate(x.date) : ""}
+   </div>
+
+   <div class="amount">${euro(x.amount)}</div>
+
+   <button class="delete" onclick="deleteCost(${x.id})">
+     Löschen
+   </button>
+
+ </div>
+
+ `).join("");
+}
+
+function formatDate(date){
+ const parts=date.split("-");
+ return parts[2]+"."+parts[1]+"."+parts[0];
+}
+
+function escapeHtml(text){
+ return String(text).replace(/[&<>"']/g,function(m){
+   return {
+     "&":"&amp;",
+     "<":"&lt;",
+     ">":"&gt;",
+     '"':"&quot;",
+     "'":"&#039;"
+   }[m];
+ });
+}
+
+render();
+
 </script>
-<p>Flexible Tabelle wird geöffnet …</p>
+
 </body>
 </html>
