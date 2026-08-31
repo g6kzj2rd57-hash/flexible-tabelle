@@ -7,12 +7,14 @@
 
 <style>
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   background:#f5f5f7;
   color:#1d1d1f;
 }
+
 header{
   background:white;
   padding:20px 16px 14px;
@@ -21,8 +23,17 @@ header{
   z-index:10;
   border-bottom:1px solid #ddd;
 }
-h1{margin:0;font-size:26px}
-main{max-width:700px;margin:auto;padding:16px}
+
+h1{
+  margin:0;
+  font-size:26px;
+}
+
+main{
+  max-width:700px;
+  margin:auto;
+  padding:16px;
+}
 
 .form,.summary,.filters,.card{
   background:white;
@@ -65,7 +76,9 @@ button{
   border:1px solid #ccc;
 }
 
-.hidden{display:none}
+.hidden{
+  display:none;
+}
 
 .summary{
   display:grid;
@@ -92,6 +105,31 @@ button{
   font-size:17px;
 }
 
+.incomeBox strong{
+  color:#16803c;
+}
+
+.expenseBox strong{
+  color:#c62828;
+}
+
+#balanceTotal.positive{
+  color:#16803c;
+}
+
+#balanceTotal.negative{
+  color:#c62828;
+}
+
+#balanceTotal.neutral{
+  color:#1d1d1f;
+}
+
+.filterTitle{
+  font-weight:700;
+  margin-bottom:8px;
+}
+
 .card .name{
   font-size:17px;
   font-weight:700;
@@ -109,8 +147,13 @@ button{
   margin-top:8px;
 }
 
-.income{color:#16803c}
-.expense{color:#c62828}
+.income{
+  color:#16803c;
+}
+
+.expense{
+  color:#c62828;
+}
 
 .cardActions{
   display:flex;
@@ -133,11 +176,6 @@ button{
   padding:30px 10px;
 }
 
-.filterTitle{
-  font-weight:700;
-  margin-bottom:8px;
-}
-
 @media(max-width:430px){
   .summary{
     grid-template-columns:1fr;
@@ -157,23 +195,38 @@ button{
 <div class="form">
 
 <label>Art</label>
+
 <select id="type">
 <option value="expense">Ausgabe</option>
 <option value="income">Einnahme</option>
 </select>
 
 <label>Kosten / Bezeichnung</label>
-<input id="name" type="text" placeholder="z. B. Strom">
+
+<input
+id="name"
+type="text"
+placeholder="z. B. Strom">
 
 <label>Betrag (€)</label>
-<input id="amount" type="number" inputmode="decimal"
-step="0.01" placeholder="0,00">
+
+<input
+id="amount"
+type="number"
+inputmode="decimal"
+step="0.01"
+placeholder="0,00">
 
 <label>Datum</label>
-<input id="date" type="date">
+
+<input
+id="date"
+type="date">
 
 <label>Kategorie</label>
+
 <select id="category">
+
 <option>Wohnen</option>
 <option>Strom</option>
 <option>Wasser</option>
@@ -186,392 +239,524 @@ step="0.01" placeholder="0,00">
 <option>Gehalt</option>
 <option>Kindergeld</option>
 <option>Sonstiges</option>
+
 </select>
 
-<button id="saveButton" onclick="saveEntry()">
+<button
+id="saveButton"
+onclick="saveEntry()">
+
 + Eintrag hinzufügen
+
 </button>
 
-<button id="cancelEdit" class="secondary hidden"
+<button
+id="cancelEdit"
+class="secondary hidden"
 onclick="cancelEdit()">
+
 Bearbeiten abbrechen
+
 </button>
 
 </div>
+
 
 <div class="summary">
 
-<div class="summaryBox">
+<div class="summaryBox incomeBox">
+
 <span>Einnahmen</span>
-<strong id="incomeTotal">0,00 €</strong>
+
+<strong id="incomeTotal">
+0,00 €
+</strong>
+
 </div>
 
-<div class="summaryBox">
+
+<div class="summaryBox expenseBox">
+
 <span>Ausgaben</span>
-<strong id="expenseTotal">0,00 €</strong>
+
+<strong id="expenseTotal">
+0,00 €
+</strong>
+
 </div>
+
 
 <div class="summaryBox">
+
 <span>Saldo</span>
-<strong id="balanceTotal">0,00 €</strong>
+
+<strong id="balanceTotal">
+0,00 €
+</strong>
+
 </div>
 
 </div>
+
 
 <div class="filters">
 
-<div class="filterTitle">Suchen & filtern</div>
+<div class="filterTitle">
+Suche
+</div>
 
-<label>Suche</label>
-<input id="search" type="search"
+<input
+id="search"
+type="search"
 placeholder="z. B. Strom, Auto..."
 oninput="render()">
 
-<label>Kategorie</label>
-<select id="filterCategory" onchange="render()">
-<option value="">Alle Kategorien</option>
-<option>Wohnen</option>
-<option>Strom</option>
-<option>Wasser</option>
-<option>Heizung</option>
-<option>Lebensmittel</option>
-<option>Auto</option>
-<option>Versicherung</option>
-<option>Internet / Handy</option>
-<option>Kinder</option>
-<option>Gehalt</option>
-<option>Kindergeld</option>
-<option>Sonstiges</option>
-</select>
-
-<label>Monat</label>
-<select id="filterMonth" onchange="render()">
-<option value="">Alle Monate</option>
-</select>
-
-<label>Art</label>
-<select id="filterType" onchange="render()">
-<option value="">Alles</option>
-<option value="expense">Ausgaben</option>
-<option value="income">Einnahmen</option>
-</select>
-
 </div>
+
 
 <div id="list"></div>
 
 </main>
 
+
 <script>
 
-let entries=JSON.parse(
-  localStorage.getItem("haushaltskosten")||"[]"
+let entries =
+JSON.parse(
+localStorage.getItem("haushaltskosten") || "[]"
 );
 
-let editId=null;
+let editId = null;
+
 
 function saveData(){
-  localStorage.setItem(
-    "haushaltskosten",
-    JSON.stringify(entries)
-  );
+
+localStorage.setItem(
+"haushaltskosten",
+JSON.stringify(entries)
+);
+
 }
+
 
 function euro(value){
-  return Number(value).toLocaleString("de-DE",{
-    minimumFractionDigits:2,
-    maximumFractionDigits:2
-  })+" €";
+
+return Number(value).toLocaleString(
+"de-DE",
+{
+minimumFractionDigits:2,
+maximumFractionDigits:2
 }
+) + " €";
+
+}
+
 
 function formatDate(date){
-  if(!date)return "";
-  const p=date.split("-");
-  return p[2]+"."+p[1]+"."+p[0];
+
+if(!date) return "";
+
+const p = date.split("-");
+
+return p[2] + "." + p[1] + "." + p[0];
+
 }
 
-function monthName(value){
-  if(!value)return "";
-  const [year,month]=value.split("-");
-  const names=[
-    "Januar","Februar","März","April","Mai","Juni",
-    "Juli","August","September","Oktober","November","Dezember"
-  ];
-  return names[Number(month)-1]+" "+year;
-}
 
 function saveEntry(){
 
-  const name=document.getElementById("name")
-    .value.trim();
+const name =
+document.getElementById("name")
+.value.trim();
 
-  const amount=parseFloat(
-    document.getElementById("amount")
-    .value.replace(",",".")
-  );
+const amount =
+parseFloat(
+document.getElementById("amount")
+.value.replace(",",".")
+);
 
-  const date=document.getElementById("date").value;
+const date =
+document.getElementById("date")
+.value;
 
-  const category=document.getElementById("category").value;
+const category =
+document.getElementById("category")
+.value;
 
-  const type=document.getElementById("type").value;
+const type =
+document.getElementById("type")
+.value;
 
-  if(!name){
-    alert("Bitte eine Bezeichnung eingeben.");
-    return;
-  }
 
-  if(isNaN(amount)||amount<=0){
-    alert("Bitte einen gültigen Betrag eingeben.");
-    return;
-  }
+if(!name){
 
-  if(editId){
+alert("Bitte eine Bezeichnung eingeben.");
 
-    const item=entries.find(x=>x.id===editId);
+return;
 
-    if(item){
-      item.name=name;
-      item.amount=amount;
-      item.date=date;
-      item.category=category;
-      item.type=type;
-    }
-
-    editId=null;
-
-  }else{
-
-    entries.push({
-      id:Date.now(),
-      name:name,
-      amount:amount,
-      date:date,
-      category:category,
-      type:type
-    });
-
-  }
-
-  saveData();
-  clearForm();
-  render();
 }
+
+
+if(isNaN(amount) || amount <= 0){
+
+alert("Bitte einen gültigen Betrag eingeben.");
+
+return;
+
+}
+
+
+if(editId){
+
+const item =
+entries.find(x => x.id === editId);
+
+if(item){
+
+item.name = name;
+item.amount = amount;
+item.date = date;
+item.category = category;
+item.type = type;
+
+}
+
+editId = null;
+
+}
+
+else{
+
+entries.push({
+
+id:Date.now(),
+
+name:name,
+
+amount:amount,
+
+date:date,
+
+category:category,
+
+type:type
+
+});
+
+}
+
+
+saveData();
+
+clearForm();
+
+render();
+
+}
+
 
 function editEntry(id){
 
-  const item=entries.find(x=>x.id===id);
+const item =
+entries.find(x => x.id === id);
 
-  if(!item)return;
+if(!item) return;
 
-  editId=id;
 
-  document.getElementById("name").value=item.name;
-  document.getElementById("amount").value=item.amount;
-  document.getElementById("date").value=item.date||"";
-  document.getElementById("category").value=item.category||"Sonstiges";
-  document.getElementById("type").value=item.type||"expense";
+editId = id;
 
-  document.getElementById("saveButton").textContent=
-    "Änderung speichern";
 
-  document.getElementById("cancelEdit")
-    .classList.remove("hidden");
+document.getElementById("name")
+.value = item.name;
 
-  window.scrollTo({top:0,behavior:"smooth"});
+document.getElementById("amount")
+.value = item.amount;
+
+document.getElementById("date")
+.value = item.date || "";
+
+document.getElementById("category")
+.value = item.category || "Sonstiges";
+
+document.getElementById("type")
+.value = item.type || "expense";
+
+
+document.getElementById("saveButton")
+.textContent =
+"Änderung speichern";
+
+
+document.getElementById("cancelEdit")
+.classList.remove("hidden");
+
+
+window.scrollTo({
+top:0,
+behavior:"smooth"
+});
+
 }
+
 
 function cancelEdit(){
 
-  editId=null;
-  clearForm();
-  render();
+editId = null;
+
+clearForm();
+
+render();
 
 }
+
 
 function clearForm(){
 
-  document.getElementById("name").value="";
-  document.getElementById("amount").value="";
-  document.getElementById("date").value="";
-  document.getElementById("type").value="expense";
-  document.getElementById("category").value="Wohnen";
+document.getElementById("name")
+.value = "";
 
-  document.getElementById("saveButton").textContent=
-    "+ Eintrag hinzufügen";
+document.getElementById("amount")
+.value = "";
 
-  document.getElementById("cancelEdit")
-    .classList.add("hidden");
+document.getElementById("date")
+.value = "";
+
+document.getElementById("type")
+.value = "expense";
+
+document.getElementById("category")
+.value = "Wohnen";
+
+
+document.getElementById("saveButton")
+.textContent =
+"+ Eintrag hinzufügen";
+
+
+document.getElementById("cancelEdit")
+.classList.add("hidden");
+
 }
+
 
 function deleteEntry(id){
 
-  if(!confirm("Diesen Eintrag wirklich löschen?"))
-    return;
+if(!confirm(
+"Diesen Eintrag wirklich löschen?"
+)) return;
 
-  entries=entries.filter(x=>x.id!==id);
 
-  saveData();
-  render();
+entries =
+entries.filter(x => x.id !== id);
+
+saveData();
+
+render();
+
 }
 
-function updateMonths(){
-
-  const select=document.getElementById("filterMonth");
-  const current=select.value;
-
-  const months=[...new Set(
-    entries
-      .filter(x=>x.date)
-      .map(x=>x.date.substring(0,7))
-  )].sort().reverse();
-
-  select.innerHTML=
-    '<option value="">Alle Monate</option>';
-
-  months.forEach(m=>{
-    const option=document.createElement("option");
-    option.value=m;
-    option.textContent=monthName(m);
-    select.appendChild(option);
-  });
-
-  select.value=months.includes(current)?current:"";
-}
 
 function render(){
 
-  updateMonths();
+const search =
+document.getElementById("search")
+.value
+.toLowerCase()
+.trim();
 
-  const search=document.getElementById("search")
-    .value.toLowerCase().trim();
 
-  const category=document.getElementById("filterCategory")
-    .value;
+let filtered =
+entries.filter(x => {
 
-  const month=document.getElementById("filterMonth")
-    .value;
+return !search ||
 
-  const type=document.getElementById("filterType")
-    .value;
+x.name
+.toLowerCase()
+.includes(search) ||
 
-  let filtered=entries.filter(x=>{
+(x.category || "")
+.toLowerCase()
+.includes(search);
 
-    const matchesSearch=
-      !search ||
-      x.name.toLowerCase().includes(search) ||
-      (x.category||"").toLowerCase().includes(search);
+});
 
-    const matchesCategory=
-      !category || x.category===category;
 
-    const matchesMonth=
-      !month || (x.date||"").startsWith(month);
+filtered.sort((a,b) => {
 
-    const matchesType=
-      !type || (x.type||"expense")===type;
+return (b.date || "")
+.localeCompare(a.date || "") ||
 
-    return matchesSearch &&
-           matchesCategory &&
-           matchesMonth &&
-           matchesType;
-  });
+b.id - a.id;
 
-  filtered.sort((a,b)=>{
-    return (b.date||"").localeCompare(a.date||"") ||
-           b.id-a.id;
-  });
+});
 
-  let income=0;
-  let expense=0;
 
-  filtered.forEach(x=>{
-    if((x.type||"expense")==="income")
-      income+=Number(x.amount);
-    else
-      expense+=Number(x.amount);
-  });
+let income = 0;
 
-  document.getElementById("incomeTotal")
-    .textContent=euro(income);
+let expense = 0;
 
-  document.getElementById("expenseTotal")
-    .textContent=euro(expense);
 
-  document.getElementById("balanceTotal")
-    .textContent=euro(income-expense);
+entries.forEach(x => {
 
-  const list=document.getElementById("list");
+if(
+(x.type || "expense") === "income"
+){
 
-  if(!filtered.length){
+income += Number(x.amount);
 
-    list.innerHTML=
-      '<div class="card empty">'+
-      'Keine Einträge gefunden.'+
-      '</div>';
-
-    return;
-  }
-
-  list.innerHTML=filtered.map(x=>{
-
-    const isIncome=
-      (x.type||"expense")==="income";
-
-    return `
-      <div class="card">
-
-        <div class="name">
-          ${escapeHtml(x.name)}
-        </div>
-
-        <div class="info">
-          ${escapeHtml(x.category||"Sonstiges")}
-          ${x.date ? " · "+formatDate(x.date) : ""}
-          · ${isIncome ? "Einnahme" : "Ausgabe"}
-        </div>
-
-        <div class="amount ${isIncome?"income":"expense"}">
-          ${isIncome?"+":"−"} ${euro(x.amount)}
-        </div>
-
-        <div class="cardActions">
-
-          <button
-            class="secondary"
-            onclick="editEntry(${x.id})">
-            ✏️ Bearbeiten
-          </button>
-
-          <button
-            class="delete"
-            onclick="deleteEntry(${x.id})">
-            🗑️ Löschen
-          </button>
-
-        </div>
-
-      </div>
-    `;
-
-  }).join("");
 }
+
+else{
+
+expense += Number(x.amount);
+
+}
+
+});
+
+
+document.getElementById("incomeTotal")
+.textContent =
+euro(income);
+
+
+document.getElementById("expenseTotal")
+.textContent =
+euro(expense);
+
+
+const balance =
+income - expense;
+
+
+const balanceElement =
+document.getElementById("balanceTotal");
+
+
+balanceElement.textContent =
+euro(balance);
+
+
+balanceElement.className =
+balance > 0
+? "positive"
+: balance < 0
+? "negative"
+: "neutral";
+
+
+const list =
+document.getElementById("list");
+
+
+if(!filtered.length){
+
+list.innerHTML =
+'<div class="card empty">' +
+'Keine Einträge gefunden.' +
+'</div>';
+
+return;
+
+}
+
+
+list.innerHTML =
+filtered.map(x => {
+
+const isIncome =
+(x.type || "expense") === "income";
+
+
+return `
+
+<div class="card">
+
+<div class="name">
+
+${escapeHtml(x.name)}
+
+</div>
+
+
+<div class="info">
+
+${escapeHtml(
+x.category || "Sonstiges"
+)}
+
+${x.date
+? " · " + formatDate(x.date)
+: ""}
+
+ · ${isIncome
+? "Einnahme"
+: "Ausgabe"}
+
+</div>
+
+
+<div class="amount ${
+isIncome ? "income" : "expense"
+}">
+
+${isIncome ? "+" : "−"}
+
+${euro(x.amount)}
+
+</div>
+
+
+<div class="cardActions">
+
+<button
+class="secondary"
+onclick="editEntry(${x.id})">
+
+✏️ Bearbeiten
+
+</button>
+
+
+<button
+class="delete"
+onclick="deleteEntry(${x.id})">
+
+🗑️ Löschen
+
+</button>
+
+</div>
+
+</div>
+
+`;
+
+}).join("");
+
+}
+
 
 function escapeHtml(text){
 
-  return String(text).replace(
-    /[&<>"']/g,
-    function(m){
-      return {
-        "&":"&amp;",
-        "<":"&lt;",
-        ">":"&gt;",
-        '"':"&quot;",
-        "'":"&#039;"
-      }[m];
-    }
-  );
+return String(text).replace(
+/[&<>"']/g,
+function(m){
+
+return {
+
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#039;"
+
+}[m];
+
+});
+
 }
+
 
 render();
 
