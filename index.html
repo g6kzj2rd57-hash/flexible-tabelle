@@ -18,95 +18,130 @@ header{
   padding:20px 16px 14px;
   position:sticky;
   top:0;
-  z-index:5;
+  z-index:10;
   border-bottom:1px solid #ddd;
 }
-h1{
-  margin:0 0 14px;
-  font-size:26px;
-}
-main{
-  max-width:700px;
-  margin:auto;
-  padding:16px;
-}
-.form{
+h1{margin:0;font-size:26px}
+main{max-width:700px;margin:auto;padding:16px}
+
+.form,.summary,.filters,.card{
   background:white;
-  padding:16px;
   border-radius:16px;
-  margin-bottom:16px;
+  padding:16px;
+  margin-bottom:12px;
+  border:1px solid #ddd;
 }
+
 label{
   display:block;
   font-size:14px;
   font-weight:600;
   margin:10px 0 5px;
 }
+
 input,select,button{
   width:100%;
   font:inherit;
   border-radius:11px;
   padding:12px;
 }
+
 input,select{
   border:1px solid #ccc;
   background:white;
 }
+
 button{
   border:0;
   background:#1d1d1f;
   color:white;
   font-weight:600;
-  margin-top:14px;
+  margin-top:12px;
 }
-.total{
-  background:#1d1d1f;
-  color:white;
-  border-radius:16px;
-  padding:18px;
-  margin-bottom:16px;
-}
-.total span{
-  display:block;
-  font-size:13px;
-  opacity:.75;
-}
-.total strong{
-  display:block;
-  font-size:28px;
-  margin-top:4px;
-}
-.card{
+
+.secondary{
   background:white;
-  border-radius:15px;
-  padding:15px;
-  margin-bottom:10px;
-  border:1px solid #ddd;
+  color:#1d1d1f;
+  border:1px solid #ccc;
 }
-.name{
+
+.hidden{display:none}
+
+.summary{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:8px;
+}
+
+.summaryBox{
+  background:#f5f5f7;
+  border-radius:12px;
+  padding:12px 8px;
+  text-align:center;
+}
+
+.summaryBox span{
+  display:block;
+  font-size:12px;
+  color:#666;
+}
+
+.summaryBox strong{
+  display:block;
+  margin-top:4px;
   font-size:17px;
-  font-weight:600;
 }
+
+.card .name{
+  font-size:17px;
+  font-weight:700;
+}
+
 .info{
   color:#666;
   font-size:14px;
-  margin-top:6px;
+  margin-top:5px;
 }
+
 .amount{
-  font-size:18px;
+  font-size:19px;
   font-weight:700;
   margin-top:8px;
 }
+
+.income{color:#16803c}
+.expense{color:#c62828}
+
+.cardActions{
+  display:flex;
+  gap:8px;
+}
+
+.cardActions button{
+  flex:1;
+}
+
 .delete{
   background:white;
-  color:#c00;
+  color:#c62828;
   border:1px solid #ddd;
-  margin-top:10px;
 }
+
 .empty{
   text-align:center;
   color:#777;
   padding:30px 10px;
+}
+
+.filterTitle{
+  font-weight:700;
+  margin-bottom:8px;
+}
+
+@media(max-width:430px){
+  .summary{
+    grid-template-columns:1fr;
+  }
 }
 </style>
 </head>
@@ -121,11 +156,18 @@ button{
 
 <div class="form">
 
+<label>Art</label>
+<select id="type">
+<option value="expense">Ausgabe</option>
+<option value="income">Einnahme</option>
+</select>
+
 <label>Kosten / Bezeichnung</label>
 <input id="name" type="text" placeholder="z. B. Strom">
 
 <label>Betrag (€)</label>
-<input id="amount" type="number" inputmode="decimal" step="0.01" placeholder="0,00">
+<input id="amount" type="number" inputmode="decimal"
+step="0.01" placeholder="0,00">
 
 <label>Datum</label>
 <input id="date" type="date">
@@ -141,16 +183,79 @@ button{
 <option>Versicherung</option>
 <option>Internet / Handy</option>
 <option>Kinder</option>
+<option>Gehalt</option>
+<option>Kindergeld</option>
 <option>Sonstiges</option>
 </select>
 
-<button onclick="addCost()">+ Kosten hinzufügen</button>
+<button id="saveButton" onclick="saveEntry()">
++ Eintrag hinzufügen
+</button>
+
+<button id="cancelEdit" class="secondary hidden"
+onclick="cancelEdit()">
+Bearbeiten abbrechen
+</button>
 
 </div>
 
-<div class="total">
-<span>Gesamtsumme</span>
-<strong id="total">0,00 €</strong>
+<div class="summary">
+
+<div class="summaryBox">
+<span>Einnahmen</span>
+<strong id="incomeTotal">0,00 €</strong>
+</div>
+
+<div class="summaryBox">
+<span>Ausgaben</span>
+<strong id="expenseTotal">0,00 €</strong>
+</div>
+
+<div class="summaryBox">
+<span>Saldo</span>
+<strong id="balanceTotal">0,00 €</strong>
+</div>
+
+</div>
+
+<div class="filters">
+
+<div class="filterTitle">Suchen & filtern</div>
+
+<label>Suche</label>
+<input id="search" type="search"
+placeholder="z. B. Strom, Auto..."
+oninput="render()">
+
+<label>Kategorie</label>
+<select id="filterCategory" onchange="render()">
+<option value="">Alle Kategorien</option>
+<option>Wohnen</option>
+<option>Strom</option>
+<option>Wasser</option>
+<option>Heizung</option>
+<option>Lebensmittel</option>
+<option>Auto</option>
+<option>Versicherung</option>
+<option>Internet / Handy</option>
+<option>Kinder</option>
+<option>Gehalt</option>
+<option>Kindergeld</option>
+<option>Sonstiges</option>
+</select>
+
+<label>Monat</label>
+<select id="filterMonth" onchange="render()">
+<option value="">Alle Monate</option>
+</select>
+
+<label>Art</label>
+<select id="filterType" onchange="render()">
+<option value="">Alles</option>
+<option value="expense">Ausgaben</option>
+<option value="income">Einnahmen</option>
+</select>
+
 </div>
 
 <div id="list"></div>
@@ -159,115 +264,313 @@ button{
 
 <script>
 
-let costs=JSON.parse(localStorage.getItem("haushaltskosten")||"[]");
+let entries=JSON.parse(
+  localStorage.getItem("haushaltskosten")||"[]"
+);
 
-function save(){
- localStorage.setItem("haushaltskosten",JSON.stringify(costs));
+let editId=null;
+
+function saveData(){
+  localStorage.setItem(
+    "haushaltskosten",
+    JSON.stringify(entries)
+  );
 }
 
 function euro(value){
- return Number(value).toLocaleString("de-DE",{
-   minimumFractionDigits:2,
-   maximumFractionDigits:2
- })+" €";
+  return Number(value).toLocaleString("de-DE",{
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  })+" €";
 }
 
-function addCost(){
-
- const name=document.getElementById("name").value.trim();
- const amount=parseFloat(
-   document.getElementById("amount").value.replace(",",".")
- );
- const date=document.getElementById("date").value;
- const category=document.getElementById("category").value;
-
- if(!name){
-   alert("Bitte eine Bezeichnung eingeben.");
-   return;
- }
-
- if(isNaN(amount)||amount<=0){
-   alert("Bitte einen gültigen Betrag eingeben.");
-   return;
- }
-
- costs.push({
-   id:Date.now(),
-   name:name,
-   amount:amount,
-   date:date,
-   category:category
- });
-
- save();
-
- document.getElementById("name").value="";
- document.getElementById("amount").value="";
- document.getElementById("date").value="";
-
- render();
+function formatDate(date){
+  if(!date)return "";
+  const p=date.split("-");
+  return p[2]+"."+p[1]+"."+p[0];
 }
 
-function deleteCost(id){
- costs=costs.filter(x=>x.id!==id);
- save();
- render();
+function monthName(value){
+  if(!value)return "";
+  const [year,month]=value.split("-");
+  const names=[
+    "Januar","Februar","März","April","Mai","Juni",
+    "Juli","August","September","Oktober","November","Dezember"
+  ];
+  return names[Number(month)-1]+" "+year;
+}
+
+function saveEntry(){
+
+  const name=document.getElementById("name")
+    .value.trim();
+
+  const amount=parseFloat(
+    document.getElementById("amount")
+    .value.replace(",",".")
+  );
+
+  const date=document.getElementById("date").value;
+
+  const category=document.getElementById("category").value;
+
+  const type=document.getElementById("type").value;
+
+  if(!name){
+    alert("Bitte eine Bezeichnung eingeben.");
+    return;
+  }
+
+  if(isNaN(amount)||amount<=0){
+    alert("Bitte einen gültigen Betrag eingeben.");
+    return;
+  }
+
+  if(editId){
+
+    const item=entries.find(x=>x.id===editId);
+
+    if(item){
+      item.name=name;
+      item.amount=amount;
+      item.date=date;
+      item.category=category;
+      item.type=type;
+    }
+
+    editId=null;
+
+  }else{
+
+    entries.push({
+      id:Date.now(),
+      name:name,
+      amount:amount,
+      date:date,
+      category:category,
+      type:type
+    });
+
+  }
+
+  saveData();
+  clearForm();
+  render();
+}
+
+function editEntry(id){
+
+  const item=entries.find(x=>x.id===id);
+
+  if(!item)return;
+
+  editId=id;
+
+  document.getElementById("name").value=item.name;
+  document.getElementById("amount").value=item.amount;
+  document.getElementById("date").value=item.date||"";
+  document.getElementById("category").value=item.category||"Sonstiges";
+  document.getElementById("type").value=item.type||"expense";
+
+  document.getElementById("saveButton").textContent=
+    "Änderung speichern";
+
+  document.getElementById("cancelEdit")
+    .classList.remove("hidden");
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function cancelEdit(){
+
+  editId=null;
+  clearForm();
+  render();
+
+}
+
+function clearForm(){
+
+  document.getElementById("name").value="";
+  document.getElementById("amount").value="";
+  document.getElementById("date").value="";
+  document.getElementById("type").value="expense";
+  document.getElementById("category").value="Wohnen";
+
+  document.getElementById("saveButton").textContent=
+    "+ Eintrag hinzufügen";
+
+  document.getElementById("cancelEdit")
+    .classList.add("hidden");
+}
+
+function deleteEntry(id){
+
+  if(!confirm("Diesen Eintrag wirklich löschen?"))
+    return;
+
+  entries=entries.filter(x=>x.id!==id);
+
+  saveData();
+  render();
+}
+
+function updateMonths(){
+
+  const select=document.getElementById("filterMonth");
+  const current=select.value;
+
+  const months=[...new Set(
+    entries
+      .filter(x=>x.date)
+      .map(x=>x.date.substring(0,7))
+  )].sort().reverse();
+
+  select.innerHTML=
+    '<option value="">Alle Monate</option>';
+
+  months.forEach(m=>{
+    const option=document.createElement("option");
+    option.value=m;
+    option.textContent=monthName(m);
+    select.appendChild(option);
+  });
+
+  select.value=months.includes(current)?current:"";
 }
 
 function render(){
 
- const list=document.getElementById("list");
+  updateMonths();
 
- const total=costs.reduce(
-   (sum,x)=>sum+Number(x.amount),0
- );
+  const search=document.getElementById("search")
+    .value.toLowerCase().trim();
 
- document.getElementById("total").textContent=euro(total);
+  const category=document.getElementById("filterCategory")
+    .value;
 
- if(costs.length===0){
-   list.innerHTML='<div class="card empty">Noch keine Kosten eingetragen.</div>';
-   return;
- }
+  const month=document.getElementById("filterMonth")
+    .value;
 
- const sorted=[...costs].reverse();
+  const type=document.getElementById("filterType")
+    .value;
 
- list.innerHTML=sorted.map(x=>`
+  let filtered=entries.filter(x=>{
 
- <div class="card">
+    const matchesSearch=
+      !search ||
+      x.name.toLowerCase().includes(search) ||
+      (x.category||"").toLowerCase().includes(search);
 
-   <div class="name">${escapeHtml(x.name)}</div>
+    const matchesCategory=
+      !category || x.category===category;
 
-   <div class="info">
-     ${escapeHtml(x.category)}
-     ${x.date ? " · "+formatDate(x.date) : ""}
-   </div>
+    const matchesMonth=
+      !month || (x.date||"").startsWith(month);
 
-   <div class="amount">${euro(x.amount)}</div>
+    const matchesType=
+      !type || (x.type||"expense")===type;
 
-   <button class="delete" onclick="deleteCost(${x.id})">
-     Löschen
-   </button>
+    return matchesSearch &&
+           matchesCategory &&
+           matchesMonth &&
+           matchesType;
+  });
 
- </div>
+  filtered.sort((a,b)=>{
+    return (b.date||"").localeCompare(a.date||"") ||
+           b.id-a.id;
+  });
 
- `).join("");
-}
+  let income=0;
+  let expense=0;
 
-function formatDate(date){
- const parts=date.split("-");
- return parts[2]+"."+parts[1]+"."+parts[0];
+  filtered.forEach(x=>{
+    if((x.type||"expense")==="income")
+      income+=Number(x.amount);
+    else
+      expense+=Number(x.amount);
+  });
+
+  document.getElementById("incomeTotal")
+    .textContent=euro(income);
+
+  document.getElementById("expenseTotal")
+    .textContent=euro(expense);
+
+  document.getElementById("balanceTotal")
+    .textContent=euro(income-expense);
+
+  const list=document.getElementById("list");
+
+  if(!filtered.length){
+
+    list.innerHTML=
+      '<div class="card empty">'+
+      'Keine Einträge gefunden.'+
+      '</div>';
+
+    return;
+  }
+
+  list.innerHTML=filtered.map(x=>{
+
+    const isIncome=
+      (x.type||"expense")==="income";
+
+    return `
+      <div class="card">
+
+        <div class="name">
+          ${escapeHtml(x.name)}
+        </div>
+
+        <div class="info">
+          ${escapeHtml(x.category||"Sonstiges")}
+          ${x.date ? " · "+formatDate(x.date) : ""}
+          · ${isIncome ? "Einnahme" : "Ausgabe"}
+        </div>
+
+        <div class="amount ${isIncome?"income":"expense"}">
+          ${isIncome?"+":"−"} ${euro(x.amount)}
+        </div>
+
+        <div class="cardActions">
+
+          <button
+            class="secondary"
+            onclick="editEntry(${x.id})">
+            ✏️ Bearbeiten
+          </button>
+
+          <button
+            class="delete"
+            onclick="deleteEntry(${x.id})">
+            🗑️ Löschen
+          </button>
+
+        </div>
+
+      </div>
+    `;
+
+  }).join("");
 }
 
 function escapeHtml(text){
- return String(text).replace(/[&<>"']/g,function(m){
-   return {
-     "&":"&amp;",
-     "<":"&lt;",
-     ">":"&gt;",
-     '"':"&quot;",
-     "'":"&#039;"
-   }[m];
- });
+
+  return String(text).replace(
+    /[&<>"']/g,
+    function(m){
+      return {
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#039;"
+      }[m];
+    }
+  );
 }
 
 render();
