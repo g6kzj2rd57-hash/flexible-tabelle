@@ -6,7 +6,9 @@
 <title>Haushaltskosten</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+}
 
 body{
   margin:0;
@@ -35,7 +37,10 @@ main{
   padding:16px;
 }
 
-.form,.summary,.filters,.card{
+.form,
+.summary,
+.filters,
+.card{
   background:white;
   border-radius:16px;
   padding:16px;
@@ -50,14 +55,17 @@ label{
   margin:10px 0 5px;
 }
 
-input,select,button{
+input,
+select,
+button{
   width:100%;
   font:inherit;
   border-radius:11px;
   padding:12px;
 }
 
-input,select{
+input,
+select{
   border:1px solid #ccc;
   background:white;
 }
@@ -128,6 +136,28 @@ button{
 .filterTitle{
   font-weight:700;
   margin-bottom:8px;
+}
+
+.dragHint{
+  color:#777;
+  font-size:13px;
+  margin-top:9px;
+}
+
+.card{
+  user-select:none;
+  -webkit-user-select:none;
+  touch-action:pan-y;
+  transition:opacity .15s,transform .15s;
+}
+
+.card.dragging{
+  opacity:.55;
+  transform:scale(.98);
+}
+
+.card.dragOver{
+  border:2px dashed #777;
 }
 
 .card .name{
@@ -311,6 +341,10 @@ type="search"
 placeholder="z. B. Strom, Auto..."
 oninput="render()">
 
+<div class="dragHint">
+↕️ Eintrag länger gedrückt halten und nach oben oder unten ziehen.
+</div>
+
 </div>
 
 
@@ -328,6 +362,14 @@ localStorage.getItem("haushaltskosten") || "[]"
 
 let editId = null;
 
+let draggedId = null;
+let longPressTimer = null;
+let isDragging = false;
+
+
+/* -------------------------------------------------
+   DATEN
+------------------------------------------------- */
 
 function saveData(){
 
@@ -338,6 +380,10 @@ JSON.stringify(entries)
 
 }
 
+
+/* -------------------------------------------------
+   HILFSFUNKTIONEN
+------------------------------------------------- */
 
 function euro(value){
 
@@ -362,6 +408,46 @@ return p[2] + "." + p[1] + "." + p[0];
 
 }
 
+
+function getOrder(item,index){
+
+if(typeof item.order === "number"){
+return item.order;
+}
+
+return index;
+
+}
+
+
+/* -------------------------------------------------
+   ALTE EINTRÄGE EINMALIG MIT REIHENFOLGE VERSEHEN
+------------------------------------------------- */
+
+let needsSave = false;
+
+entries.forEach((item,index)=>{
+
+if(typeof item.order !== "number"){
+
+item.order = index;
+
+needsSave = true;
+
+}
+
+});
+
+if(needsSave){
+
+saveData();
+
+}
+
+
+/* -------------------------------------------------
+   EINTRAG SPEICHERN
+------------------------------------------------- */
 
 function saveEntry(){
 
@@ -390,7 +476,9 @@ document.getElementById("type")
 
 if(!name){
 
-alert("Bitte eine Bezeichnung eingeben.");
+alert(
+"Bitte eine Bezeichnung eingeben."
+);
 
 return;
 
@@ -399,7 +487,9 @@ return;
 
 if(isNaN(amount) || amount <= 0){
 
-alert("Bitte einen gültigen Betrag eingeben.");
+alert(
+"Bitte einen gültigen Betrag eingeben."
+);
 
 return;
 
@@ -409,7 +499,9 @@ return;
 if(editId){
 
 const item =
-entries.find(x => x.id === editId);
+entries.find(
+x => x.id === editId
+);
 
 if(item){
 
@@ -427,6 +519,22 @@ editId = null;
 
 else{
 
+let maxOrder = -1;
+
+entries.forEach(item=>{
+
+if(
+typeof item.order === "number" &&
+item.order > maxOrder
+){
+
+maxOrder = item.order;
+
+}
+
+});
+
+
 entries.push({
 
 id:Date.now(),
@@ -439,7 +547,9 @@ date:date,
 
 category:category,
 
-type:type
+type:type,
+
+order:maxOrder + 1
 
 });
 
@@ -455,10 +565,16 @@ render();
 }
 
 
+/* -------------------------------------------------
+   BEARBEITEN
+------------------------------------------------- */
+
 function editEntry(id){
 
 const item =
-entries.find(x => x.id === id);
+entries.find(
+x => x.id === id
+);
 
 if(!item) return;
 
@@ -469,17 +585,24 @@ editId = id;
 document.getElementById("name")
 .value = item.name;
 
+
 document.getElementById("amount")
 .value = item.amount;
 
+
 document.getElementById("date")
-.value = item.date || "";
+.value =
+item.date || "";
+
 
 document.getElementById("category")
-.value = item.category || "Sonstiges";
+.value =
+item.category || "Sonstiges";
+
 
 document.getElementById("type")
-.value = item.type || "expense";
+.value =
+item.type || "expense";
 
 
 document.getElementById("saveButton")
@@ -492,12 +615,19 @@ document.getElementById("cancelEdit")
 
 
 window.scrollTo({
+
 top:0,
+
 behavior:"smooth"
+
 });
 
 }
 
+
+/* -------------------------------------------------
+   BEARBEITEN ABBRECHEN
+------------------------------------------------- */
 
 function cancelEdit(){
 
@@ -510,19 +640,27 @@ render();
 }
 
 
+/* -------------------------------------------------
+   FORMULAR LEEREN
+------------------------------------------------- */
+
 function clearForm(){
 
 document.getElementById("name")
 .value = "";
 
+
 document.getElementById("amount")
 .value = "";
+
 
 document.getElementById("date")
 .value = "";
 
+
 document.getElementById("type")
 .value = "expense";
+
 
 document.getElementById("category")
 .value = "Wohnen";
@@ -539,6 +677,10 @@ document.getElementById("cancelEdit")
 }
 
 
+/* -------------------------------------------------
+   LÖSCHEN
+------------------------------------------------- */
+
 function deleteEntry(id){
 
 if(!confirm(
@@ -547,7 +689,10 @@ if(!confirm(
 
 
 entries =
-entries.filter(x => x.id !== id);
+entries.filter(
+x => x.id !== id
+);
+
 
 saveData();
 
@@ -555,6 +700,382 @@ render();
 
 }
 
+
+/* -------------------------------------------------
+   REIHENFOLGE SPEICHERN
+------------------------------------------------- */
+
+function normalizeOrder(){
+
+entries.forEach((item,index)=>{
+
+item.order = index;
+
+});
+
+saveData();
+
+}
+
+
+/* -------------------------------------------------
+   EINTRÄGE VERSCHIEBEN
+------------------------------------------------- */
+
+function moveEntry(draggedId,targetId){
+
+if(draggedId === targetId){
+
+return;
+
+}
+
+
+const draggedIndex =
+entries.findIndex(
+x => x.id === draggedId
+);
+
+const targetIndex =
+entries.findIndex(
+x => x.id === targetId
+);
+
+
+if(
+draggedIndex === -1 ||
+targetIndex === -1
+){
+
+return;
+
+}
+
+
+const draggedItem =
+entries.splice(
+draggedIndex,
+1
+)[0];
+
+
+let newIndex =
+entries.findIndex(
+x => x.id === targetId
+);
+
+
+if(newIndex === -1){
+
+entries.push(draggedItem);
+
+}
+
+else{
+
+entries.splice(
+newIndex,
+0,
+draggedItem
+);
+
+}
+
+
+normalizeOrder();
+
+render();
+
+}
+
+
+/* -------------------------------------------------
+   LANGES DRÜCKEN
+------------------------------------------------- */
+
+function startLongPress(event,id,card){
+
+if(event.target.closest(".cardActions")){
+
+return;
+
+}
+
+
+draggedId = id;
+
+draggedCard = card;
+
+isDragging = false;
+
+
+longPressTimer =
+setTimeout(()=>{
+
+isDragging = true;
+
+card.classList.add("dragging");
+
+},450);
+
+}
+
+
+function cancelLongPress(){
+
+if(longPressTimer){
+
+clearTimeout(
+longPressTimer
+);
+
+longPressTimer = null;
+
+}
+
+}
+
+
+/* -------------------------------------------------
+   TOUCH-BEWEGUNG
+------------------------------------------------- */
+
+function handleTouchMove(event){
+
+if(!isDragging){
+
+return;
+
+}
+
+
+event.preventDefault();
+
+
+const touch =
+event.touches[0];
+
+const element =
+document.elementFromPoint(
+touch.clientX,
+touch.clientY
+);
+
+
+const card =
+element
+? element.closest(".card[data-id]")
+: null;
+
+
+document
+.querySelectorAll(".card.dragOver")
+.forEach(c=>{
+c.classList.remove(
+"dragOver"
+);
+});
+
+
+if(
+card &&
+String(card.dataset.id) !==
+String(draggedId)
+){
+
+card.classList.add(
+"dragOver"
+);
+
+}
+
+}
+
+
+/* -------------------------------------------------
+   TOUCH ENDE
+------------------------------------------------- */
+
+function handleTouchEnd(event){
+
+cancelLongPress();
+
+
+if(!isDragging){
+
+draggedId = null;
+
+return;
+
+}
+
+
+const touch =
+event.changedTouches[0];
+
+const element =
+document.elementFromPoint(
+touch.clientX,
+touch.clientY
+);
+
+
+const targetCard =
+element
+? element.closest(".card[data-id]")
+: null;
+
+
+let targetId = null;
+
+
+if(targetCard){
+
+targetId =
+Number(targetCard.dataset.id);
+
+}
+
+
+document
+.querySelectorAll(".card.dragOver")
+.forEach(c=>{
+c.classList.remove(
+"dragOver"
+);
+});
+
+
+if(
+targetId &&
+targetId !== draggedId
+){
+
+moveEntry(
+draggedId,
+targetId
+);
+
+}
+
+
+if(draggedCard){
+
+draggedCard.classList.remove(
+"dragging"
+);
+
+}
+
+
+draggedId = null;
+
+draggedCard = null;
+
+isDragging = false;
+
+}
+
+
+/* -------------------------------------------------
+   MOUSE / DESKTOP
+------------------------------------------------- */
+
+function enableMouseDrag(card,id){
+
+card.draggable = true;
+
+
+card.addEventListener(
+"dragstart",
+function(){
+
+draggedId = id;
+
+card.classList.add(
+"dragging"
+);
+
+}
+);
+
+
+card.addEventListener(
+"dragover",
+function(event){
+
+event.preventDefault();
+
+if(
+draggedId !== id
+){
+
+card.classList.add(
+"dragOver"
+);
+
+}
+
+}
+);
+
+
+card.addEventListener(
+"dragleave",
+function(){
+
+card.classList.remove(
+"dragOver"
+);
+
+}
+);
+
+
+card.addEventListener(
+"drop",
+function(event){
+
+event.preventDefault();
+
+card.classList.remove(
+"dragOver"
+);
+
+if(
+draggedId !== id
+){
+
+moveEntry(
+draggedId,
+id
+);
+
+}
+
+}
+);
+
+
+card.addEventListener(
+"dragend",
+function(){
+
+card.classList.remove(
+"dragging"
+);
+
+draggedId = null;
+
+}
+);
+
+}
+
+
+/* -------------------------------------------------
+   RENDERN
+------------------------------------------------- */
 
 function render(){
 
@@ -566,7 +1087,7 @@ document.getElementById("search")
 
 
 let filtered =
-entries.filter(x => {
+entries.filter(x=>{
 
 return !search ||
 
@@ -581,12 +1102,17 @@ x.name
 });
 
 
-filtered.sort((a,b) => {
+/*
+   WICHTIG:
+   Nicht mehr nach Datum sortieren.
+   Die selbst gewählte Reihenfolge
+   bleibt erhalten.
+*/
 
-return (b.date || "")
-.localeCompare(a.date || "") ||
+filtered.sort((a,b)=>{
 
-b.id - a.id;
+return getOrder(a,0) -
+getOrder(b,0);
 
 });
 
@@ -596,32 +1122,37 @@ let income = 0;
 let expense = 0;
 
 
-entries.forEach(x => {
+entries.forEach(x=>{
 
 if(
-(x.type || "expense") === "income"
+(x.type || "expense") ===
+"income"
 ){
 
-income += Number(x.amount);
+income +=
+Number(x.amount);
 
 }
 
 else{
 
-expense += Number(x.amount);
+expense +=
+Number(x.amount);
 
 }
 
 });
 
 
-document.getElementById("incomeTotal")
-.textContent =
+document.getElementById(
+"incomeTotal"
+).textContent =
 euro(income);
 
 
-document.getElementById("expenseTotal")
-.textContent =
+document.getElementById(
+"expenseTotal"
+).textContent =
 euro(expense);
 
 
@@ -630,7 +1161,9 @@ income - expense;
 
 
 const balanceElement =
-document.getElementById("balanceTotal");
+document.getElementById(
+"balanceTotal"
+);
 
 
 balanceElement.textContent =
@@ -638,15 +1171,20 @@ euro(balance);
 
 
 balanceElement.className =
+
 balance > 0
 ? "positive"
+
 : balance < 0
 ? "negative"
+
 : "neutral";
 
 
 const list =
-document.getElementById("list");
+document.getElementById(
+"list"
+);
 
 
 if(!filtered.length){
@@ -662,15 +1200,20 @@ return;
 
 
 list.innerHTML =
-filtered.map(x => {
+
+filtered.map(x=>{
 
 const isIncome =
-(x.type || "expense") === "income";
+(x.type || "expense") ===
+"income";
 
 
 return `
 
-<div class="card">
+<div
+class="card"
+data-id="${x.id}"
+>
 
 <div class="name">
 
@@ -682,11 +1225,15 @@ ${escapeHtml(x.name)}
 <div class="info">
 
 ${escapeHtml(
-x.category || "Sonstiges"
+x.category ||
+"Sonstiges"
 )}
 
 ${x.date
-? " · " + formatDate(x.date)
+
+? " · " +
+formatDate(x.date)
+
 : ""}
 
  · ${isIncome
@@ -696,11 +1243,18 @@ ${x.date
 </div>
 
 
-<div class="amount ${
-isIncome ? "income" : "expense"
-}">
+<div
+class="amount ${
+isIncome
+? "income"
+: "expense"
+}"
+>
 
-${isIncome ? "+" : "−"}
+${isIncome
+? "+"
+: "−"
+}
 
 ${euro(x.amount)}
 
@@ -711,7 +1265,8 @@ ${euro(x.amount)}
 
 <button
 class="secondary"
-onclick="editEntry(${x.id})">
+onclick="editEntry(${x.id})"
+>
 
 ✏️ Bearbeiten
 
@@ -720,7 +1275,8 @@ onclick="editEntry(${x.id})">
 
 <button
 class="delete"
-onclick="deleteEntry(${x.id})">
+onclick="deleteEntry(${x.id})"
+>
 
 🗑️ Löschen
 
@@ -734,8 +1290,86 @@ onclick="deleteEntry(${x.id})">
 
 }).join("");
 
+
+/*
+   Touch-Funktion für jede Karte
+*/
+
+document
+.querySelectorAll(".card[data-id]")
+.forEach(card=>{
+
+const id =
+Number(card.dataset.id);
+
+
+/* iPhone / Touch */
+
+card.addEventListener(
+"touchstart",
+function(event){
+
+startLongPress(
+event,
+id,
+card
+);
+
+},
+{passive:true}
+);
+
+
+card.addEventListener(
+"touchmove",
+handleTouchMove,
+{passive:false}
+);
+
+
+card.addEventListener(
+"touchend",
+handleTouchEnd
+);
+
+
+card.addEventListener(
+"touchcancel",
+function(){
+
+cancelLongPress();
+
+if(draggedCard){
+
+draggedCard.classList.remove(
+"dragging"
+);
+
 }
 
+isDragging = false;
+
+draggedId = null;
+
+}
+);
+
+
+/* Computer */
+
+enableMouseDrag(
+card,
+id
+);
+
+});
+
+}
+
+
+/* -------------------------------------------------
+   HTML SICHER AUSGEBEN
+------------------------------------------------- */
 
 function escapeHtml(text){
 
@@ -757,6 +1391,10 @@ return {
 
 }
 
+
+/* -------------------------------------------------
+   START
+------------------------------------------------- */
 
 render();
 
